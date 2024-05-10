@@ -12,7 +12,12 @@ func main() {
 	if code != nil {
 		mod := py.ImportModule(c.Str("__main__"))
 		gbl := mod.GetDict()
-		py.EvalCode(code, gbl, nil)
+
+		result := py.EvalCode(code, gbl, nil)
+
+		result.DecRef()
+		mod.DecRef()
+		code.DecRef()
 	}
 	py.Finalize()
 }
