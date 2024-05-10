@@ -51,11 +51,6 @@ func Finalize()
 
 // -----------------------------------------------------------------------------
 
-// llgo:type C
-type CompilerFlags struct {
-	CfFlags Int
-}
-
 //go:linkname RunSimpleString C.PyRun_SimpleString
 func RunSimpleString(command *Char) Int
 
@@ -67,5 +62,64 @@ func RunSimpleFile(fp c.FilePtr, filename *Char) Int
 
 //go:linkname RunSimpleFileFlags C.PyRun_SimpleFileFlags
 func RunSimpleFileFlags(fp c.FilePtr, filename *Char, flags *CompilerFlags) Int
+
+// -----------------------------------------------------------------------------
+
+type InputType Int
+
+const (
+	SingleInput InputType = 256 // read code from i/o
+	FileInput   InputType = 257 // read code from filename
+	EvalInput   InputType = 258 // read code from string
+	// FuncTypeInput InputType = 345
+)
+
+// llgo:type C
+type CompilerFlags struct {
+	CfFlags Int
+}
+
+//go:linkname CompileString C.Py_CompileString
+func CompileString(str, filename *Char, start InputType) *Object
+
+//go:linkname CompileStringFlags C.Py_CompileStringFlags
+func CompileStringFlags(str, filename *Char, start InputType, flags *CompilerFlags) *Object
+
+//go:linkname CompileStringExFlags C.Py_CompileStringExFlags
+func CompileStringExFlags(str, filename *Char, start InputType, flags *CompilerFlags, optimize Int) *Object
+
+// Parse and compile the Python source code in str, returning the resulting code object.
+// The start token is given by start; this can be used to constrain the code which can be
+// compiled and should be py.EvalInput, py.FileInput, or py.SingleInput. The filename
+// specified by filename is used to construct the code object and may appear in tracebacks
+// or SyntaxError exception messages. This returns NULL if the code cannot be parsed or
+// compiled.
+//
+// The integer optimize specifies the optimization level of the compiler; a value of -1
+// selects the optimization level of the interpreter as given by -O options. Explicit levels
+// are 0 (no optimization; __debug__ is true), 1 (asserts are removed, __debug__ is false) or
+// 2 (docstrings are removed too).
+//
+//go:linkname CompileStringObject C.Py_CompileStringObject
+func CompileStringObject(str *Char, filename *Object, start InputType, flags *CompilerFlags, optimize Int) *Object
+
+// -----------------------------------------------------------------------------
+
+// This is a simplified interface to EvalCodeEx, with just the code object, and global and
+// local variables. The other arguments are set to nil.
+//
+//go:linkname EvalCode C.PyEval_EvalCode
+func EvalCode(code, globals, locals *Object) *Object
+
+// Evaluate a precompiled code object, given a particular environment for its evaluation.
+// This environment consists of a dictionary of global variables, a mapping object of local
+// variables, arrays of arguments, keywords and defaults, a dictionary of default values for
+// keyword-only arguments and a closure tuple of cells.
+//
+//go:linkname EvalCodeEx C.PyEval_EvalCodeEx
+func EvalCodeEx(
+	code, globals, locals *Object,
+	args *Object, argcount Int, kws *Object, kwcount Int,
+	defs *Object, defcount Int, kwdefs, closure *Object) *Object
 
 // -----------------------------------------------------------------------------
